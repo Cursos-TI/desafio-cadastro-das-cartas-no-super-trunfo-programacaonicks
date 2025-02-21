@@ -17,9 +17,25 @@ typedef struct {
 
 // Função para calcular os valores derivados
 void calcularValores(Carta *c) {
-    c->densidadePopulacional = c->populacao / c->area;
-    c->pibPerCapita = (c->pib * 1000000000) / c->populacao;
+    if (c->area > 0) {
+        c->densidadePopulacional = c->populacao / c->area;
+    } else {
+        c->densidadePopulacional = 0;
+    }
+    if (c->populacao > 0) {
+        c->pibPerCapita = (c->pib * 1e9) / c->populacao;
+    } else {
+        c->pibPerCapita = 0;
+    }
     c->superPoder = c->populacao + c->area + c->pib + c->pontosTuristicos;
+}
+
+// Função para exibir a lista de cidades disponíveis
+void exibirListaCidades(Carta cidades[], int numCidades) {
+    printf("Lista de cidades disponíveis:\n");
+    for (int i = 0; i < numCidades; i++) {
+        printf("%d - %s (%s)\n", i, cidades[i].nomeCidade, cidades[i].nomeEstado);
+    }
 }
 
 // Função para exibir os dados da cidade
@@ -37,17 +53,125 @@ void exibirCarta(Carta c) {
     printf("PIB per Capita: R$ %.2f\n", c.pibPerCapita);
 }
 
-void compararCartas(Carta c1, Carta c2) {
-    printf("\nComparação entre %s e %s:\n", c1.nomeCidade, c2.nomeCidade);
-    printf("População: %s vence!\n", (c1.populacao > c2.populacao) ? c1.nomeCidade : c2.nomeCidade);
-    printf("Área: %s vence!\n", (c1.area > c2.area) ? c1.nomeCidade : c2.nomeCidade);
-    printf("PIB: %s vence!\n", (c1.pib > c2.pib) ? c1.nomeCidade : c2.nomeCidade);
-    printf("Pontos Turísticos: %s vence!\n", (c1.pontosTuristicos > c2.pontosTuristicos) ? c1.nomeCidade : c2.nomeCidade);
-    printf("Densidade Populacional: %s vence!\n", (c1.densidadePopulacional > c2.densidadePopulacional) ? c1.nomeCidade : c2.nomeCidade);
-    printf("PIB per Capita: %s vence!\n", (c1.pibPerCapita > c2.pibPerCapita) ? c1.nomeCidade : c2.nomeCidade);
-    printf("Super Poder: %s vence!\n", (c1.superPoder > c2.superPoder) ? c1.nomeCidade : c2.nomeCidade);
+// Função para comparar os atributos escolhidos pelo usuário
+void compararCartas(Carta c1, Carta c2, int atributo) {
+    printf("\n=== Comparação entre %s e %s ===\n", c1.nomeCidade, c2.nomeCidade);
+    
+    double valor1, valor2;
+    char *nomeAtributo;
+    int inverso = 0; // 1 se o menor valor for o vencedor (para densidade demográfica)
+
+    switch (atributo) {
+        case 1: nomeAtributo = "População"; valor1 = c1.populacao; valor2 = c2.populacao; break;
+        case 2: nomeAtributo = "Área (km²)"; valor1 = c1.area; valor2 = c2.area; break;
+        case 3: nomeAtributo = "PIB (bilhões)"; valor1 = c1.pib; valor2 = c2.pib; break;
+        case 4: nomeAtributo = "Pontos Turísticos"; valor1 = c1.pontosTuristicos; valor2 = c2.pontosTuristicos; break;
+        case 5: 
+            nomeAtributo = "Densidade Populacional";
+            valor1 = c1.densidadePopulacional;
+            valor2 = c2.densidadePopulacional;
+            inverso = 1; // Aqui a menor densidade vence
+            break;
+        default:
+            printf("Opção inválida!\n");
+            return;
+    }
+
+    printf("%-25s | %-15.2f | %-15.2f\n", nomeAtributo, valor1, valor2);
+
+    if (valor1 == valor2) {
+        printf("\nEmpate!\n");
+    } else if ((valor1 > valor2 && !inverso) || (valor1 < valor2 && inverso)) {
+        printf("\n%s venceu!\n", c1.nomeCidade);
+    } else {
+        printf("\n%s venceu!\n", c2.nomeCidade);
+    }
+}
+// Função para exibir os atributos disponíveis
+void exibirAtributos() {
+    printf("\nAtributos disponíveis para comparação:\n");
+    printf("1 - População\n");
+    printf("2 - Área (km²)\n");
+    printf("3 - PIB (bilhões)\n");
+    printf("4 - Pontos Turísticos\n");
+    printf("5 - Densidade Populacional\n");
 }
 
+// Função para obter o valor de um atributo específico
+double obterAtributo(Carta c, int atributo) {
+    switch (atributo) {
+        case 1: return c.populacao;
+        case 2: return c.area;
+        case 3: return c.pib;
+        case 4: return c.pontosTuristicos;
+        case 5: return c.densidadePopulacional;
+        default: return -1;
+    }
+}
+
+// Função para comparar dois atributos (Modo Aventureiro)
+void compararCartasAventureiro(Carta c1, Carta c2, int atributo) {
+    printf("\n=== Comparação entre %s e %s ===\n", c1.nomeCidade, c2.nomeCidade);
+    
+    double valor1 = obterAtributo(c1, atributo);
+    double valor2 = obterAtributo(c2, atributo);
+    int inverso = (atributo == 5); // Densidade: menor valor vence
+
+    if (valor1 == valor2) {
+        printf("\nEmpate!\n");
+    } else if ((valor1 > valor2 && !inverso) || (valor1 < valor2 && inverso)) {
+        printf("\nVencedor: %s\n", c1.nomeCidade);
+    } else {
+        printf("\nVencedor: %s\n", c2.nomeCidade);
+    }
+}
+
+// Função para comparar dois atributos no Modo Mestre
+void compararCartasMestre(Carta c1, Carta c2, int atributo1, int atributo2) {
+    int pontosC1 = 0, pontosC2 = 0;
+    
+    double valor1_c1 = obterAtributo(c1, atributo1);
+    double valor1_c2 = obterAtributo(c2, atributo1);
+    double valor2_c1 = obterAtributo(c1, atributo2);
+    double valor2_c2 = obterAtributo(c2, atributo2);
+
+    int inverso1 = (atributo1 == 5); // Densidade: menor valor vence
+    int inverso2 = (atributo2 == 5);
+
+    printf("\n=== Comparação Modo Mestre ===\n");
+    printf("%s vs %s\n", c1.nomeCidade, c2.nomeCidade);
+
+    // Comparação do primeiro atributo
+    if (valor1_c1 == valor1_c2) {
+        printf("Atributo 1: Empate\n");
+    } else if ((valor1_c1 > valor1_c2 && !inverso1) || (valor1_c1 < valor1_c2 && inverso1)) {
+        printf("Atributo 1: %s venceu\n", c1.nomeCidade);
+        pontosC1++;
+    } else {
+        printf("Atributo 1: %s venceu\n", c2.nomeCidade);
+        pontosC2++;
+    }
+
+    // Comparação do segundo atributo
+    if (valor2_c1 == valor2_c2) {
+        printf("Atributo 2: Empate\n");
+    } else if ((valor2_c1 > valor2_c2 && !inverso2) || (valor2_c1 < valor2_c2 && inverso2)) {
+        printf("Atributo 2: %s venceu\n", c1.nomeCidade);
+        pontosC1++;
+    } else {
+        printf("Atributo 2: %s venceu\n", c2.nomeCidade);
+        pontosC2++;
+    }
+
+    // Determinar vencedor final
+    if (pontosC1 > pontosC2) {
+        printf("\nVencedor final: %s\n", c1.nomeCidade);
+    } else if (pontosC1 < pontosC2) {
+        printf("\nVencedor final: %s\n", c2.nomeCidade);
+    } else {
+        printf("\nResultado: Empate!\n");
+    }
+}
     int main() {
 
     // Array contendo as 32 cidades
@@ -89,13 +213,37 @@ void compararCartas(Carta c1, Carta c2) {
     };
 
     int numCidades = 32;
-
-    // Comparar todas as cidades entre si
-for (int i = 0; i < numCidades; i++) {
-    for (int j = i + 1; j < numCidades; j++) { // Evita comparações repetidas
-        compararCartas(cidades[i], cidades[j]);
+    for (int i = 0; i < numCidades; i++) {
+        calcularValores(&cidades[i]);
     }
-}
 
+    int modo, escolha1, escolha2, atributo1, atributo2;
+
+    printf("Escolha o modo de jogo:\n1 - Modo Aventureiro (1 atributo)\n2 - Modo Mestre (2 atributos)\n");
+    scanf("%d", &modo);
+
+    exibirListaCidades(cidades, numCidades);
+    printf("\nEscolha duas cidades para comparar (números): ");
+    scanf("%d %d", &escolha1, &escolha2);
+
+    if (escolha1 < 0 || escolha1 >= numCidades || escolha2 < 0 || escolha2 >= numCidades) {
+        printf("\nErro: Cidades inválidas!\n");
+        return 1;
+    }
+
+    exibirAtributos();
+    printf("\nEscolha o primeiro atributo: ");
+    scanf("%d", &atributo1);
+
+    if (modo == 1) {
+        compararCartasAventureiro(cidades[escolha1], cidades[escolha2], atributo1);
+    } else {
+        do {
+            printf("Escolha o segundo atributo: ");
+            scanf("%d", &atributo2);
+        } while (atributo1 == atributo2);
+        
+        compararCartasMestre(cidades[escolha1], cidades[escolha2], atributo1, atributo2);
+    }
     return 0;
 }
